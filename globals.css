@@ -1,0 +1,144 @@
+/* Sweety Business : design system (phase 1) */
+
+:root {
+  /* Couleurs : pas de jaune ni de doré, prix toujours noirs */
+  --bg: #ffffff;
+  --bg-soft: #f6f7fa;
+  --ink: #0a0a0a;
+  --ink-muted: #5b5f6b;
+  --blue: #1f3fd1;          /* bleu royal : boutons et interactions */
+  --blue-press: #1732a8;
+  --green: #12a150;         /* disponibilité, WhatsApp, confirmations */
+  --red: #d7263d;           /* « Bientôt épuisé » */
+  --line: #e6e8ee;
+
+  /* Élévation : trois niveaux d'ombres douces pour l'effet suspendu */
+  --lift-1: 0 2px 6px rgba(15, 23, 60, .05), 0 8px 20px rgba(15, 23, 60, .06);
+  --lift-2: 0 4px 10px rgba(15, 23, 60, .06), 0 18px 40px rgba(15, 23, 60, .10);
+  --lift-3: 0 8px 18px rgba(15, 23, 60, .08), 0 30px 60px rgba(15, 23, 60, .14);
+
+  --radius-card: 22px;
+  --radius-btn: 999px;
+  --ease: cubic-bezier(.22, .8, .3, 1);
+
+  --font: "Manrope", system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg-soft);
+  color: var(--ink);
+  font-family: var(--font);
+  font-size: 16px;
+  line-height: 1.5;
+  overflow-x: hidden;           /* aucun débordement horizontal */
+}
+
+img, video { max-width: 100%; display: block; }
+
+/* IMAGES : toujours remplir leur cadre, sans déformation ni bandes vides */
+.img-frame {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-soft);
+  aspect-ratio: 4 / 5;           /* produit : portrait */
+  border-radius: var(--radius-card);
+}
+.img-frame--square { aspect-ratio: 1 / 1; }
+.img-frame--wide   { aspect-ratio: 16 / 9; }   /* bannières, publicités */
+.img-frame--banner { aspect-ratio: 21 / 9; }
+.img-frame > img,
+.img-frame > video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;             /* remplit le cadre */
+  object-position: center;
+}
+
+/* Flottant : carte suspendue */
+.float-card {
+  background: var(--bg);
+  border-radius: var(--radius-card);
+  box-shadow: var(--lift-1);
+  transition: transform .35s var(--ease), box-shadow .35s var(--ease);
+}
+.float-card:hover { transform: translateY(-4px); box-shadow: var(--lift-2); }
+
+/* Section légèrement détachée du fond */
+.float-section {
+  background: var(--bg);
+  border-radius: 28px;
+  box-shadow: var(--lift-1);
+  margin: 16px 12px;
+  padding: 20px 16px;
+}
+
+/* Image flottante */
+.float-img { box-shadow: var(--lift-2); }
+
+/* Mouvement : une seule oscillation lente, uniquement transform (léger pour mobile) */
+@keyframes drift {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+.is-drifting { animation: drift 6s ease-in-out infinite; }
+
+/* Boutons suspendus */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: 48px; padding: 0 24px;       /* zone tactile confortable */
+  border: 0; border-radius: var(--radius-btn);
+  font: 700 15px/1 var(--font);
+  color: #fff; background: var(--blue);
+  box-shadow: 0 6px 16px rgba(31, 63, 209, .28);
+  cursor: pointer;
+  transition: transform .25s var(--ease), box-shadow .25s var(--ease), background .2s;
+}
+.btn:hover  { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(31, 63, 209, .32); }
+.btn:active { transform: translateY(0); background: var(--blue-press); box-shadow: 0 3px 8px rgba(31, 63, 209, .3); }
+.btn--whatsapp { background: var(--green); box-shadow: 0 6px 16px rgba(18, 161, 80, .28); }
+.btn--ghost { background: var(--bg); color: var(--blue); box-shadow: var(--lift-1); }
+.btn:focus-visible, a:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+
+/* Prix : toujours noirs */
+.price { color: var(--ink); font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* Disponibilité */
+.stock { font-weight: 700; font-size: 14px; }
+.stock--ok  { color: var(--green); }
+.stock--low { color: var(--red); }
+
+/* Carrousel tactile */
+.carousel {
+  display: flex; gap: 14px;
+  overflow-x: auto; scroll-snap-type: x mandatory;
+  padding: 8px 16px 24px;                  /* place pour les ombres */
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.carousel::-webkit-scrollbar { display: none; }
+.carousel > * { flex: 0 0 72%; scroll-snap-align: center; }
+
+/* Panier flottant (mobile) */
+.cart-fab {
+  position: fixed; right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 50;
+}
+
+@media (min-width: 768px) {
+  .carousel > * { flex-basis: 280px; }
+  .float-section { margin: 24px auto; max-width: 1120px; padding: 32px; }
+}
+
+/* Respect des préférences d'accessibilité */
+@media (prefers-reduced-motion: reduce) {
+  .is-drifting { animation: none; }
+  .float-card, .btn { transition: none; }
+}
