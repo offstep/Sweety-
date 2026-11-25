@@ -8,11 +8,11 @@ const safe = (u) => (/^https?:\/\/|^\//.test(u || '') ? u : null);
 const Title = ({ children }) => (children ? <h2 className="sec-title">{children}</h2> : null);
 const Cta = ({ c }) => (c.button_label && safe(c.link_url) ? <Link className="btn" href={c.link_url}>{c.button_label}</Link> : null);
 
-function Grid({ title, list, settings }) {
+function Grid({ title, list, settings, large }) {
   if (!list.length) return null;
   return (
     <section className="float-section"><Title>{title}</Title>
-      <div className="pgrid">{list.map((p) => <ProductCard key={p.id} product={p} settings={settings} />)}</div>
+      <div className={`pgrid${large ? ' pgrid--large' : ''}`}>{list.map((p) => <ProductCard key={p.id} product={p} settings={settings} large={large} />)}</div>
     </section>
   );
 }
@@ -30,8 +30,19 @@ function Slider({ s, ratio }) {
     </section>
   );
 }
+function Pill({ s }) {
+  const c = s.config ?? {};
+  const label = c.title || c.text;
+  if (!label) return null;
+  return safe(c.link_url) ? <Link href={c.link_url} className="pill-banner">{label}</Link> : <div className="pill-banner">{label}</div>;
+}
 function Hero({ s }) {
   const c = s.config ?? {};
+  if (!safe(c.image_url)) return (
+    <section className="hero hero--plain float-card">
+      {c.title && <h2>{c.title}</h2>}{c.subtitle && <p>{c.subtitle}</p>}<Cta c={c} />
+    </section>
+  );
   return (
     <section className="hero float-card">
       <Img src={c.image_url} alt={c.title ?? ''} ratio="img-frame--banner" priority sizes="100vw" />
@@ -49,11 +60,16 @@ export default async function HomeSections({ settings }) {
   for (const s of sections) {
     const c = s.config ?? {};
     switch (s.type) {
-      case 'hero_banner': case 'custom_banner': out.push(<Hero key={s.id} s={s} />); break;
+      case 'hero_banner': out.push(<Hero key={s.id} s={s} />); break;
+      case 'custom_banner': out.push(safe(c.image_url) ? <Hero key={s.id} s={s} /> : <Pill key={s.id} s={s} />); break;
       case 'image_slider': case 'carousel': out.push(<Slider key={s.id} s={s} ratio="img-frame--wide" />); break;
       case 'categories': {
         const { data: cats } = await supabase.from('categories').select('id, name, slug, image_url').eq('is_active', true).order('position').order('name');
-        if (cats?.length) out.push(
+        if (cats?.length && c.style === 'chips') out.push(
+          <section key={s.id} className="float-section"><Title>{s.title || 'Catégories'}</Title>
+            <div className="chips">{cats.map((k) => <Link key={k.id} href={`/categories/${k.slug}`} className="chip-link">{k.name}</Link>)}</div>
+          </section>);
+        else if (cats?.length) out.push(
           <section key={s.id} className="float-section"><Title>{s.title || 'Catégories'}</Title>
             <div className="carousel carousel--cats">
               {cats.map((k) => (
@@ -64,8 +80,8 @@ export default async function HomeSections({ settings }) {
           </section>);
         break;
       }
-      case 'popular': out.push(<Grid key={s.id} title={s.title || 'Produits populaires'} list={await getProducts({ popular: true })} settings={settings} />); break;
-      case 'new_arrivals': out.push(<Grid key={s.id} title={s.title || 'Nouveautés'} list={await getProducts()} settings={settings} />); break;
+      case 'popular': out.push(<Grid key={s.id} title={s.title || 'Produits populaires'} list={await getProducts({ popular: true })} settings={settings} large={c.layout === 'large'} />); break;
+      case 'new_arrivals': out.push(<Grid key={s.id} title={s.title || 'Nouveautés'} list={await getProducts()} settings={settings} large={c.layout === 'large'} />); break;
       case 'recommendations': out.push(<Grid key={s.id} title={s.title || 'Recommandations'} list={(await getProducts({ limit: 24 })).sort(() => Math.random() - 0.5).slice(0, 8)} settings={settings} />); break;
       case 'promotions': {
         const { data: promos } = await supabase.from('promotions').select('id, name').eq('is_active', true);
